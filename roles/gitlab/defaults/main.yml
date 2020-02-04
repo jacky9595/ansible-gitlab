@@ -7,7 +7,7 @@ ansible_os_family: Ubuntu
 gitlab_external_url: "{{ local_home }}"
 gitlab_git_data_dir: "/var/opt/gitlab/git-data"
 gitlab_edition: "gitlab-ee"
-gitlab_version: '12.7.2-ee.0'
+gitlab_version: ''
 gitlab_backup_path: "/var/opt/gitlab/backups"
 gitlab_config_template: "gitlab.rb.j2"
 
