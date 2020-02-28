@@ -1,0 +1,43 @@
+<VirtualHost *:80>
+    #Redirect all http traffic to https if it is pointed at /jenkins /nexus /sonar
+#    RewriteEngine On
+#    RewriteCond %{HTTPS} off
+#    RewriteCond %{REQUEST_URI} ^/(sonar)/?.*$
+#    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+#    ProxyPass           /  http://localhost:9000/
+#    ProxyPassReverse    /  http://localhost:9000/
+
+#    Redirect permanent / https://localhost/
+
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} !^(localhost|127.0.0.1)
+    RewriteRule ^/(.*) https://%{SERVER_NAME}/$1 [R,L]
+
+    CustomLog /var/log/apache2/{{ apache_custom_log_file }}.log combined
+    ErrorLog /var/log/apache2/{{ apache_error_log_file }}.log
+</VirtualHost>
+
+<VirtualHost *:443>
+    SSLEngine on
+    SSLCertificateFile {{ apache_ssl_folder }}/{{ apache_certificate_file }}
+    SSLCertificateKeyFile {{ apache_ssl_folder }}/{{ apache_certificate_key_file }}
+
+    <Proxy *>
+        Order deny,allow
+        Allow from all
+    </Proxy>
+
+    ProxyRequests Off
+
+    ProxyPass / {{ apache_http }}
+    ProxyPassReverse / {{ apache_http }}
+    
+    RewriteEngine On
+    RewriteRule /[-\/\w\.]+\.git\/ {{ apache_http_without_slash }}%{REQUEST_URI} [P,QSA,L]
+
+    CustomLog /var/log/apache2/{{ apache_custom_https_log }}.log combined
+    ErrorLog /var/log/apache2/{{ apache_error_https_log }}.log
+</VirtualHost>
+
