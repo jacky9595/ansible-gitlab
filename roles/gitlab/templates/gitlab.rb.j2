@@ -1,5 +1,5 @@
 # The URL through which GitLab will be accessed.
-external_url "{{ gitlab_external_url }}"
+external_url "https://{{ gitlab_external_url }}"
 
 # gitlab.yml configuration
 gitlab_rails['time_zone'] = "{{ gitlab_time_zone }}"
@@ -15,9 +15,26 @@ gitlab_rails['gitlab_email_reply_to'] = "{{ gitlab_email_reply_to }}"
 gitlab_rails['gitlab_default_theme'] = "{{ gitlab_default_theme }}"
 
 # Whether to redirect http to https.
-nginx['redirect_http_to_https'] = {{ gitlab_redirect_http_to_https }}
+nginx['enable'] = true
+nginx['client_max_body_size'] = "{{ client_max_body_size }}"
+nginx['redirect_http_to_https'] = "{{ gitlab_redirect_http_to_https }}"
 nginx['ssl_certificate'] = "{{ gitlab_ssl_certificate }}"
 nginx['ssl_certificate_key'] = "{{ gitlab_ssl_certificate_key }}"
+nginx['ssl_protocols'] = "TLSv1.1 TLSv1.2"
+
+nginx['listen_address'] = 'localhost'
+nginx['listen_port'] = {{ gitlab_external_port }}
+nginx['listen_https'] = false
+
+# PORT CHANGE
+
+#gitlab_workhorse['enable'] = true
+#gitlab_workhorse['listen_network'] = "tcp"
+#gitlab_workhorse['listen_addr'] = "{{ gitlab_external_url }}:{{ gitlab_external_port }}"
+
+alertmanager['flags'] = {
+  'cluster.advertise-address' => "{{ gitlab_external_url }}:{{ gitlab_external_port }}"
+}
 
 # The directory where Git repositories will be stored.
 git_data_dirs({"default" => {"path" => "{{ gitlab_git_data_dir }}"} })
