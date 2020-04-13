@@ -27,7 +27,7 @@ nginx['listen_https'] = false
 
 #gitlab_workhorse['enable'] = true
 gitlab_workhorse['listen_network'] = "tcp"
-gitlab_workhorse['listen_addr'] = "127.0.0.1:8181"
+gitlab_workhorse['listen_addr'] = "127.0.0.1:{{ gitlab_external_port }}"
 #gitlab_workhorse_options="-listenUmask 0 -listenNetwork tcp -listenAddr 127.0.0.1:8181 -authBackend http://127.0.0.1:8080"
 
 
