@@ -1,8 +1,8 @@
-local_home: "{{ lookup('env','publicip') }}"
+#local_home: "{{ lookup('env','publicip') }}"
 apache_ssl_folder: /etc/ssl/certs
 apache_server_name: gitlab-ssl
-apache_http: http://{{ local_home }}:8181/
-apache_http_without_slash: http://{{ local_home }}:8181
+apache_http: http://gitlab.babelci.es:8181/
+apache_http_without_slash: http://gitlab.babelci.es:8181
 apache_custom_log_file: custom_log_file_http
 apache_error_log_file: custom_log_error_file_http
 apache_certificate_file: babelci.crt
