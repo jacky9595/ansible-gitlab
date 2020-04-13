@@ -6,8 +6,8 @@ ansible_os_family: Ubuntu
 
 # General config.
 
-gitlab_external_url: 127.0.0.1
-gitlab_external_port: 8090
+gitlab_external_url: gitlab.babelci.es
+gitlab_external_port: 8181
 gitlab_git_data_dir: "/var/opt/gitlab/git-data"
 gitlab_edition: "gitlab-ee"
 gitlab_version: '12.7.2-ee.0'

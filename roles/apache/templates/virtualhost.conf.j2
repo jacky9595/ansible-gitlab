@@ -1,43 +1,83 @@
 <VirtualHost *:80>
-    #Redirect all http traffic to https if it is pointed at /jenkins /nexus /sonar
-#    RewriteEngine On
-#    RewriteCond %{HTTPS} off
-#    RewriteCond %{REQUEST_URI} ^/(sonar)/?.*$
-#    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  ServerName {{ apache_url_name }}
+  ServerSignature Off
 
-#    ProxyPass           /  http://localhost:9000/
-#    ProxyPassReverse    /  http://localhost:9000/
-
-#    Redirect permanent / https://localhost/
-
-    RewriteEngine On
-    RewriteCond %{HTTPS} off
-    RewriteCond %{HTTP_HOST} !^(localhost|127.0.0.1)
-    RewriteRule ^/(.*) https://%{SERVER_NAME}/$1 [R,L]
-
-    CustomLog /var/log/apache2/{{ apache_custom_log_file }}.log combined
-    ErrorLog /var/log/apache2/{{ apache_error_log_file }}.log
+  RewriteEngine on
+  RewriteCond %{HTTPS} !=on
+  RewriteRule .* https://%{SERVER_NAME}%{REQUEST_URI} [NE,R,L]
 </VirtualHost>
 
 <VirtualHost *:443>
-    SSLEngine on
-    SSLCertificateFile {{ apache_ssl_folder }}/{{ apache_certificate_file }}
-    SSLCertificateKeyFile {{ apache_ssl_folder }}/{{ apache_certificate_key_file }}
+  SSLEngine on
+  #strong encryption ciphers only
+  #see ciphers(1) http://www.openssl.org/docs/apps/ciphers.html
+  SSLProtocol all -SSLv2
+  SSLHonorCipherOrder on
+  SSLCipherSuite "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS"
+  Header add Strict-Transport-Security: "max-age=15768000;includeSubdomains"
+  SSLCompression Off
+  
+  SSLCertificateFile /etc/ssl/certs/babelci.crt
+  SSLCertificateKeyFile /etc/ssl/certs/babelci.key  
 
-    <Proxy *>
-        Order deny,allow
-        Allow from all
-    </Proxy>
+  ServerName {{ apache_url_name }}
+  ServerSignature Off
 
-    ProxyRequests Off
+  ProxyPreserveHost On
 
-    ProxyPass / {{ apache_http }}
-    ProxyPassReverse / {{ apache_http }}
-    
-    RewriteEngine On
-    RewriteRule /[-\/\w\.]+\.git\/ {{ apache_http_without_slash }}%{REQUEST_URI} [P,QSA,L]
+  # Ensure that encoded slashes are not decoded but left in their encoded state.
+  # http://doc.gitlab.com/ce/api/projects.html#get-single-project
+  AllowEncodedSlashes NoDecode
 
-    CustomLog /var/log/apache2/{{ apache_custom_https_log }}.log combined
-    ErrorLog /var/log/apache2/{{ apache_error_https_log }}.log
+  <Location />
+    # New authorization commands for apache 2.4 and up
+    # http://httpd.apache.org/docs/2.4/upgrading.html#access
+    Require all granted
+
+    #Allow forwarding to gitlab-workhorse
+    ProxyPassReverse http://127.0.0.1:{{ apache_port }}
+    ProxyPassReverse {{ apache_http }}
+  </Location>
+
+  RewriteEngine on
+
+  RewriteCond %{REQUEST_URI} ^/api/v\d+/.* [OR]
+  RewriteCond %{REQUEST_URI} .*-/refs/.*/logs_tree/.* [OR]
+  RewriteCond %{REQUEST_URI} .*-/tree/.*
+
+  RewriteRule .* http://127.0.0.1:{{ apache_port }}%{REQUEST_URI} [P,QSA,NE]
+
+
+  #Forward all requests to gitlab-workhorse except existing files like error documents
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f [OR]
+  RewriteCond %{REQUEST_URI} ^/uploads/.*
+# Shibboleth
+#  RewriteCond %{REQUEST_URI} !/Shibboleth.sso
+#  RewriteCond %{REQUEST_URI} !/shibboleth-sp
+# end Shibboleth
+  # Remove "NE" flag to allow special characters (spaces) in path
+  RewriteRule .* http://127.0.0.1:{{ apache_port }}%{REQUEST_URI} [P,QSA]
+
+  RequestHeader set X_FORWARDED_PROTO 'https'
+  RequestHeader set X-Forwarded-Ssl on
+
+  # needed for downloading attachments
+  DocumentRoot /opt/gitlab/embedded/service/gitlab-rails/public
+
+  #Set up apache error documents, if back end goes down (i.e. 503 error) then a maintenance/deploy page is thrown up.
+  ErrorDocument 404 /404.html
+  ErrorDocument 422 /422.html
+  ErrorDocument 500 /500.html
+  ErrorDocument 502 /502.html
+  ErrorDocument 503 /503.html
+
+  # It is assumed that the log directory is in /var/log/httpd.
+  # For Debian distributions you might want to change this to
+  # /var/log/apache2.
+  LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b" common_forwarded
+  ErrorLog /var/log/apache2/gitlab_babel_error.log
+  CustomLog /var/log/apache2/gitlab_babel_forwarded.log common_forwarded
+  CustomLog /var/log/apache2/gitlab_babel_access.log combined env=!dontlog
+  CustomLog /var/log/apache2/gitlab_babel.log combined
+
 </VirtualHost>
-
