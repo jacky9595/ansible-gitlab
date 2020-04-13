@@ -32,7 +32,7 @@ gitlab_workhorse['listen_addr'] = "127.0.0.1:{{ gitlab_external_port }}"
 
 
 alertmanager['flags'] = {
-  'cluster.advertise-address' => "127.0.0.1:8181"
+  'cluster.advertise-address' => "127.0.0.1:{{ gitlab_external_port }}"
 }
 
 # The directory where Git repositories will be stored.
