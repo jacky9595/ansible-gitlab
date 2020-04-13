@@ -45,7 +45,7 @@
   RewriteCond %{REQUEST_URI} .*-/refs/.*/logs_tree/.* [OR]
   RewriteCond %{REQUEST_URI} .*-/tree/.*
 
-  RewriteRule .* {{ apache_http_without_slash }}%{REQUEST_URI} [P,QSA,NE]
+  RewriteRule .* http://127.0.0.1:{{ apache_port }}%{REQUEST_URI} [P,QSA,NE]
 
 
   #Forward all requests to gitlab-workhorse except existing files like error documents
@@ -56,7 +56,7 @@
 #  RewriteCond %{REQUEST_URI} !/shibboleth-sp
 # end Shibboleth
   # Remove "NE" flag to allow special characters (spaces) in path
-  RewriteRule .* {{ apache_http_without_slash }}%{REQUEST_URI} [P,QSA]
+  RewriteRule .* http://127.0.0.1:{{ apache_port }}%{REQUEST_URI} [P,QSA]
 
   RequestHeader set X_FORWARDED_PROTO 'https'
   RequestHeader set X-Forwarded-Ssl on
