@@ -1,6 +1,7 @@
+local_home: "{{ lookup('env','publicip') }}"
 apache_ssl_folder: /etc/ssl/certs
 apache_server_name: gitlab-ssl
-apache_http: http://127.0.0.1:8090/
+apache_http: http://{{ local_home }}:8090/
 apache_http_without_slash: http://127.0.0.1:8090
 apache_custom_log_file: custom_log_file_http
 apache_error_log_file: custom_log_error_file_http
