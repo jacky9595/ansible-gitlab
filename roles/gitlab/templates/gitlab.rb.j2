@@ -1,6 +1,6 @@
 # The URL through which GitLab will be accessed.
-external_url "https://192.168.1.135"
-web_server['external_users'] = ['www-data']
+external_url "https://127.0.0.1"
+#web_server['external_users'] = ['www-data']
 
 # gitlab.yml configuration
 gitlab_rails['time_zone'] = "Europe/Madrid"
@@ -27,12 +27,12 @@ nginx['listen_https'] = false
 
 #gitlab_workhorse['enable'] = true
 gitlab_workhorse['listen_network'] = "tcp"
-#gitlab_workhorse['listen_addr'] = "192.168.1.135:8181"
-gitlab_workhorse_options="-listenUmask 0 -listenNetwork tcp -listenAddr 127.0.0.1:8181 -authBackend http://127.0.0.1:8080"
+gitlab_workhorse['listen_addr'] = "127.0.0.1:8181"
+#gitlab_workhorse_options="-listenUmask 0 -listenNetwork tcp -listenAddr 127.0.0.1:8181 -authBackend http://127.0.0.1:8080"
 
 
 alertmanager['flags'] = {
-  'cluster.advertise-address' => "192.168.1.135:8181"
+  'cluster.advertise-address' => "127.0.0.1:8181"
 }
 
 # The directory where Git repositories will be stored.
