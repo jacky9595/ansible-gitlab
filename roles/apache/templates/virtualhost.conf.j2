@@ -1,5 +1,5 @@
 <VirtualHost *:80>
-  ServerName 127.0.0.1
+  ServerName {{ local_home }}
   ServerSignature Off
 
   RewriteEngine on
@@ -20,7 +20,7 @@
   SSLCertificateFile /etc/ssl/certs/babelci.crt
   SSLCertificateKeyFile /etc/ssl/certs/babelci.key  
 
-  ServerName 127.0.0.1
+  ServerName {{ local_home }}
   ServerSignature Off
 
   ProxyPreserveHost On
@@ -35,8 +35,8 @@
     Require all granted
 
     #Allow forwarding to gitlab-workhorse
-    ProxyPassReverse http://127.0.0.1:8181
-    ProxyPassReverse http://127.0.0.1/
+    ProxyPassReverse {{ apache_http_without_slash }}
+    ProxyPassReverse {{ apache_http }}
   </Location>
 
   RewriteEngine on
@@ -45,7 +45,7 @@
   RewriteCond %{REQUEST_URI} .*-/refs/.*/logs_tree/.* [OR]
   RewriteCond %{REQUEST_URI} .*-/tree/.*
 
-  RewriteRule .* http://127.0.0.1:8181%{REQUEST_URI} [P,QSA,NE]
+  RewriteRule .* {{ apache_http_without_slash }}%{REQUEST_URI} [P,QSA,NE]
 
 
   #Forward all requests to gitlab-workhorse except existing files like error documents
@@ -56,7 +56,7 @@
 #  RewriteCond %{REQUEST_URI} !/shibboleth-sp
 # end Shibboleth
   # Remove "NE" flag to allow special characters (spaces) in path
-  RewriteRule .* http://127.0.0.1:8181%{REQUEST_URI} [P,QSA]
+  RewriteRule .* {{ apache_http_without_slash }}%{REQUEST_URI} [P,QSA]
 
   RequestHeader set X_FORWARDED_PROTO 'https'
   RequestHeader set X-Forwarded-Ssl on
