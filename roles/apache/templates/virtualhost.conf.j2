@@ -1,5 +1,5 @@
 <VirtualHost *:80>
-  ServerName {{ local_home }}
+  ServerName {{ apache_url_name }}
   ServerSignature Off
 
   RewriteEngine on
@@ -20,7 +20,7 @@
   SSLCertificateFile /etc/ssl/certs/babelci.crt
   SSLCertificateKeyFile /etc/ssl/certs/babelci.key  
 
-  ServerName {{ local_home }}
+  ServerName {{ apache_url_name }}
   ServerSignature Off
 
   ProxyPreserveHost On
