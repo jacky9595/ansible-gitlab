@@ -1,7 +1,5 @@
-# This section is only needed if you want to redirect http traffic to https.
-# You can live without it but clients will have to type in https:// to reach gitlab.
 <VirtualHost *:80>
-  ServerName 192.168.1.135
+  ServerName 127.0.0.1
   ServerSignature Off
 
   RewriteEngine on
@@ -17,35 +15,69 @@
   SSLHonorCipherOrder on
   SSLCipherSuite "ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS"
   Header add Strict-Transport-Security: "max-age=15768000;includeSubdomains"
-  RequestHeader set "X-Forwarded-Proto" expr=%{REQUEST_SCHEME}
   SSLCompression Off
+  
   SSLCertificateFile /etc/ssl/certs/babelci.crt
-  SSLCertificateKeyFile /etc/ssl/certs/babelci.key
-#  SSLCACertificateFile /etc/httpd/ssl.crt/your-ca.crt
+  SSLCertificateKeyFile /etc/ssl/certs/babelci.key  
 
-  ServerName 192.168.1.135
-  ServerName git.example.at
-
-  DocumentRoot /opt/gitlab/embedded/service/gitlab-rails/public/
-  <Directory /opt/gitlab/embedded/service/gitlab-rails/public/>
-    Require all granted
-  </Directory>
+  ServerName 127.0.0.1
+  ServerSignature Off
 
   ProxyPreserveHost On
-  AllowEncodedSlashes Off
+
+  # Ensure that encoded slashes are not decoded but left in their encoded state.
+  # http://doc.gitlab.com/ce/api/projects.html#get-single-project
+  AllowEncodedSlashes NoDecode
 
   <Location />
-    Order deny,allow
-    Allow from all
-    ProxyPassReverse http://127.0.0.1:8080
-    ProxyPassReverse http://git.example.at/
+    # New authorization commands for apache 2.4 and up
+    # http://httpd.apache.org/docs/2.4/upgrading.html#access
+    Require all granted
+
+    #Allow forwarding to gitlab-workhorse
+    ProxyPassReverse http://127.0.0.1:8181
+    ProxyPassReverse http://127.0.0.1/
   </Location>
 
   RewriteEngine on
-  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f
-  RewriteRule .* http://127.0.0.1:8080%{REQUEST_URI} [P,QSA]
 
+  RewriteCond %{REQUEST_URI} ^/api/v\d+/.* [OR]
+  RewriteCond %{REQUEST_URI} .*-/refs/.*/logs_tree/.* [OR]
+  RewriteCond %{REQUEST_URI} .*-/tree/.*
+
+  RewriteRule .* http://127.0.0.1:8181%{REQUEST_URI} [P,QSA,NE]
+
+
+  #Forward all requests to gitlab-workhorse except existing files like error documents
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f [OR]
+  RewriteCond %{REQUEST_URI} ^/uploads/.*
+# Shibboleth
+#  RewriteCond %{REQUEST_URI} !/Shibboleth.sso
+#  RewriteCond %{REQUEST_URI} !/shibboleth-sp
+# end Shibboleth
+  # Remove "NE" flag to allow special characters (spaces) in path
+  RewriteRule .* http://127.0.0.1:8181%{REQUEST_URI} [P,QSA]
+
+  RequestHeader set X_FORWARDED_PROTO 'https'
+  RequestHeader set X-Forwarded-Ssl on
+
+  # needed for downloading attachments
+  DocumentRoot /opt/gitlab/embedded/service/gitlab-rails/public
+
+  #Set up apache error documents, if back end goes down (i.e. 503 error) then a maintenance/deploy page is thrown up.
+  ErrorDocument 404 /404.html
+  ErrorDocument 422 /422.html
+  ErrorDocument 500 /500.html
+  ErrorDocument 502 /502.html
+  ErrorDocument 503 /503.html
+
+  # It is assumed that the log directory is in /var/log/httpd.
+  # For Debian distributions you might want to change this to
+  # /var/log/apache2.
+  LogFormat "%{X-Forwarded-For}i %l %u %t \"%r\" %>s %b" common_forwarded
+  ErrorLog /var/log/apache2/gitlab_babel_error.log
+  CustomLog /var/log/apache2/gitlab_babel_forwarded.log common_forwarded
+  CustomLog /var/log/apache2/gitlab_babel_access.log combined env=!dontlog
+  CustomLog /var/log/apache2/gitlab_babel.log combined
 
 </VirtualHost>
-
-
