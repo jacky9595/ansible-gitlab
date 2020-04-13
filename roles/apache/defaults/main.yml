@@ -2,6 +2,7 @@
 apache_ssl_folder: /etc/ssl/certs
 apache_server_name: gitlab-ssl
 apache_url_name: gitlab.babelci.es
+apache_port: 8181
 apache_http: http://gitlab.babelci.es:8181/
 apache_http_without_slash: http://gitlab.babelci.es:8181
 apache_custom_log_file: custom_log_file_http
