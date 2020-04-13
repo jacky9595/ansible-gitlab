@@ -6,7 +6,7 @@ ansible_os_family: Ubuntu
 
 # General config.
 
-gitlab_external_url: {{ local_home }}
+gitlab_external_url: "{{ local_home }}"
 gitlab_external_port: 8181
 gitlab_git_data_dir: "/var/opt/gitlab/git-data"
 gitlab_edition: "gitlab-ee"
