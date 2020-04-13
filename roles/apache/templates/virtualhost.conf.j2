@@ -35,7 +35,7 @@
     Require all granted
 
     #Allow forwarding to gitlab-workhorse
-    ProxyPassReverse {{ apache_http_without_slash }}
+    ProxyPassReverse http://127.0.0.1:{{ apache_port }}
     ProxyPassReverse {{ apache_http }}
   </Location>
 
